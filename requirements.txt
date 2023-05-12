@@ -16,3 +16,4 @@ pandas
 tqdm
 requests
 deepspeed
+accelerate

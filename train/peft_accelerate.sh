@@ -2,7 +2,7 @@
 
 model_name_or_path=bigscience/bloomz-7b1-mt
 data_path=data/data.json
-gpu_ids=2,3
+gpu_ids=0
 model_max_length=2048
 output_dir=checkpoints/llms_bloom_7b/
 
