@@ -28,6 +28,6 @@ accelerate launch --config_file ./peft/accelerate_config.yaml --gpu_ids ${gpu_id
   --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
   --gradient_checkpointing True \
   --lora True \
-  --lora_dim 16 \
+  --lora_r 16 \
   --lora_alpha 16 \
-  --lora_droppout 0.05
+  --lora_dropout 0.05
