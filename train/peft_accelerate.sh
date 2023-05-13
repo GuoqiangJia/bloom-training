@@ -13,9 +13,9 @@ accelerate launch --config_file ./peft/accelerate_config.yaml --gpu_ids ${gpu_id
   --output_dir ${output_dir} \
   --bf16 True \
   --num_train_epochs 3 \
-  --per_device_train_batch_size 4 \
-  --per_device_eval_batch_size 4 \
-  --gradient_accumulation_steps 8 \
+  --per_device_train_batch_size 1 \
+  --per_device_eval_batch_size 1 \
+  --gradient_accumulation_steps 1 \
   --save_strategy "steps" \
   --save_steps 500 \
   --evaluation_strategy "no" \
@@ -28,4 +28,8 @@ accelerate launch --config_file ./peft/accelerate_config.yaml --gpu_ids ${gpu_id
   --fsdp "full_shard auto_wrap" \
   --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
   --tf32 True \
-  --gradient_checkpointing True
+  --gradient_checkpointing True \
+  --lora True \
+  --lora_dim 16 \
+  --lora_alpha 16 \
+  --lora_droppout 0.05
