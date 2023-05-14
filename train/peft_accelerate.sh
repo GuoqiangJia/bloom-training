@@ -2,11 +2,10 @@
 
 model_name_or_path=bigscience/bloomz-7b1-mt
 data_path=data/data.json
-gpu_ids=0
 model_max_length=2048
 output_dir=checkpoints/llms_bloom_7b/
 
-accelerate launch --config_file ./peft/accelerate_config.yaml --gpu_ids ${gpu_ids} ./peft/train.py \
+accelerate launch --config_file ./peft/accelerate_config.yaml ./peft/train.py \
   --model_name_or_path ${model_name_or_path} \
   --model_max_length ${model_max_length} \
   --data_path ${data_path} \
