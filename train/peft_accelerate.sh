@@ -11,6 +11,7 @@ accelerate launch --config_file ./peft/accelerate_config.yaml --gpu_ids ${gpu_id
   --model_max_length ${model_max_length} \
   --data_path ${data_path} \
   --output_dir ${output_dir} \
+  --bf16 True \
   --num_train_epochs 3 \
   --per_device_train_batch_size 1 \
   --per_device_eval_batch_size 1 \
