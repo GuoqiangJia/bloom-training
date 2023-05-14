@@ -17,5 +17,7 @@ tqdm
 requests
 deepspeed
 accelerate
-torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 chardet
+--index-url https://download.pytorch.org/whl/cu118 torch
+--index-url https://download.pytorch.org/whl/cu118 torchvision
+--index-url https://download.pytorch.org/whl/cu118 torchaudio
