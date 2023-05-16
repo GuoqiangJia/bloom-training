@@ -39,7 +39,7 @@ def build_model(model_args, training_args):
         cache_dir=training_args.cache_dir,
         load_in_8bit=True if model_args.lora else False,
         torch_dtype=torch.float16 if model_args.lora else None,
-        device_map={"": int(os.environ.get("LOCAL_RANK") or 0)} if model_args.lora else None
+        device_map=None
     )
 
     # Step 2: Initialize tokenizer
