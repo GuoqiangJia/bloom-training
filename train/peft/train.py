@@ -140,7 +140,7 @@ def main():
     if getattr(accelerator.state, "deepspeed_plugin", None):
         is_ds_zero_3 = accelerator.state.deepspeed_plugin.zero_stage == 3
 
-    for epoch in range(num_train_epochs):
+    for epoch in range(int(num_train_epochs)):
         with TorchTracemalloc() as tracemalloc:
             model.train()
             total_loss = 0
