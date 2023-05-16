@@ -4,6 +4,18 @@ deepspeed_config:
   gradient_clipping: 1.0
   offload_optimizer_device: cpu
   offload_param_device: cpu
+  "fp16": {
+    "enabled": true,
+    "auto_cast": false,
+    "loss_scale": 0,
+    "initial_scale_power": 16,
+    "loss_scale_window": 1000,
+    "hysteresis": 2,
+    "min_loss_scale": 1
+  }
+  "bf16": {
+    "enabled": false
+  }
 #  zero3_init_flag: true
 #  zero3_save_16bit_model: true
   zero_stage: 1
