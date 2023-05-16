@@ -18,6 +18,7 @@ requests
 deepspeed
 accelerate
 chardet
+cudatoolkit==11.8
 
 --extra-index-url https://download.pytorch.org/whl/cu118
 torch
