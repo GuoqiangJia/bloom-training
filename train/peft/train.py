@@ -111,10 +111,9 @@ def main():
     max_length = 64
     set_seed(seed)
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
-    data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
-
+    # tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
     model, tokenizer = build_model(model_args, training_args)
+    data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
 
     train_dataloader = DataLoader(
         data_module["train_dataset"], shuffle=True, collate_fn=data_module["data_collator"],
