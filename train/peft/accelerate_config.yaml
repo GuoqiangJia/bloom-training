@@ -21,13 +21,13 @@ deepspeed_config:
   zero_stage: 1
 
 distributed_type: DEEPSPEED
-downcast_bf16: 'no'
+downcast_bf16: 'yes'
 dynamo_backend: 'NO'
 fsdp_config: {}
 machine_rank: 0
 main_training_function: main
 megatron_lm_config: {}
-mixed_precision: 'no'
+mixed_precision: 'yes'
 num_machines: 1
 num_processes: 1
 rdzv_backend: static
