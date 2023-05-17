@@ -5,7 +5,7 @@ output_dir=checkpoints/llms_bloom_7b/
 
 torchrun \
   --nnodes=1 \
-  train.py \
+  ./peft/train.py \
   --model_name_or_path ${model_name_or_path} \
   --model_max_length ${model_max_length} \
   --data_path ${data_path} \
