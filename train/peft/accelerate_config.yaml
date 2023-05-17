@@ -16,17 +16,19 @@ deepspeed_config:
   "bf16": {
     "enabled": false
   }
-#  zero3_init_flag: true
-#  zero3_save_16bit_model: true
+  #  zero3_init_flag: true
+  #  zero3_save_16bit_model: true
   zero_stage: 1
 
 distributed_type: DEEPSPEED
 downcast_bf16: 'True'
 dynamo_backend: 'NO'
-fsdp_config: {}
+fsdp_config:
+  fsdp: "full_shard auto_wrap",
+  fsdp_transformer_layer_cls_to_wrap: 'BloomBlock'
 machine_rank: 0
 main_training_function: main
-megatron_lm_config: {}
+megatron_lm_config: { }
 mixed_precision: 'bf16'
 num_machines: 1
 num_processes: 1
