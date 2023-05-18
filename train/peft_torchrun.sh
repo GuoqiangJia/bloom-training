@@ -27,4 +27,8 @@ torchrun \
   --fsdp "full_shard auto_wrap" \
   --fsdp_transformer_layer_cls_to_wrap 'BloomBlock' \
   --tf32 True \
-  --gradient_checkpointing True
+  --gradient_checkpointing True \
+  --lora True \
+  --lora_r 16 \
+  --lora_alpha 16 \
+  --lora_dropout 0.05
