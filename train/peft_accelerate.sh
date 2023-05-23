@@ -26,6 +26,6 @@ accelerate launch --config_file ./peft/accelerate_config.yaml ./peft/train.py \
   --logging_steps 1 \
   --gradient_checkpointing True \
   --lora True \
-  --lora_r 16 \
-  --lora_alpha 16 \
+  --lora_r 8 \
+  --lora_alpha 32 \
   --lora_dropout 0.05

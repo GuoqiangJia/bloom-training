@@ -78,7 +78,7 @@ def build_model(model_args, training_args):
                                  r=model_args.lora_r, lora_alpha=model_args.lora_alpha,
                                  lora_dropout=model_args.lora_dropout,
                                  target_modules=target_modules)
-        model = prepare_model_for_int8_training(model)
+        # model = prepare_model_for_int8_training(model)
         model = get_peft_model(model, peft_config)
         model.print_trainable_parameters()
 
