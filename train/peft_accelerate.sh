@@ -24,7 +24,6 @@ accelerate launch --config_file ./peft/accelerate_config.yaml ./peft/train.py \
   --warmup_ratio 0.03 \
   --lr_scheduler_type "cosine" \
   --logging_steps 1 \
-  --tf32 True \
   --gradient_checkpointing True \
   --lora True \
   --lora_r 16 \
