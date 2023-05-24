@@ -6,6 +6,7 @@ import logging
 
 import transformers
 from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_int8_training
+from torch import nn
 
 from constants import DEFAULT_PAD_TOKEN, DEFAULT_BOS_TOKEN, DEFAULT_EOS_TOKEN, DEFAULT_UNK_TOKEN
 
@@ -42,8 +43,22 @@ def build_model(model_args, training_args):
         device_map='auto'
     )
 
-    if model_args.lora:
-        model = prepare_model_for_int8_training(model)
+    # if model_args.lora:
+    #     model = prepare_model_for_int8_training(model)
+
+    for param in model.parameters():
+        param.requires_grad = False  # freeze the model - train adapters later
+        if param.ndim == 1:
+            # cast the small parameters (e.g. layernorm) to fp32 for stability
+            param.data = param.data.to(torch.float32)
+
+    model.gradient_checkpointing_enable()  # reduce number of stored activations
+    model.enable_input_require_grads()
+
+    class CastOutputToFloat(nn.Sequential):
+        def forward(self, x): return super().forward(x).to(torch.float32)
+
+    model.lm_head = CastOutputToFloat(model.lm_head)
 
     # Step 2: Initialize tokenizer
     logging.info(f"+ [Model] Initializing Tokenizer: {model_args.model_name_or_path}")
