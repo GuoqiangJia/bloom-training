@@ -37,10 +37,13 @@ def build_model(model_args, training_args):
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
-        # load_in_8bit=True if model_args.lora else False,
+        load_in_8bit=True if model_args.lora else False,
         torch_dtype=torch.float16 if model_args.lora else None,
         device_map='auto'
     )
+
+    if model_args.lora:
+        model = prepare_model_for_int8_training(model)
 
     # Step 2: Initialize tokenizer
     logging.info(f"+ [Model] Initializing Tokenizer: {model_args.model_name_or_path}")
@@ -78,7 +81,6 @@ def build_model(model_args, training_args):
                                  r=model_args.lora_r, lora_alpha=model_args.lora_alpha,
                                  lora_dropout=model_args.lora_dropout,
                                  target_modules=target_modules)
-        # model = prepare_model_for_int8_training(model)
         model = get_peft_model(model, peft_config)
         model.print_trainable_parameters()
 
