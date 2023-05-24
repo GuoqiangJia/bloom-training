@@ -17,7 +17,7 @@ accelerate launch --config_file ./peft/accelerate_config.yaml ./peft/train.py \
   --save_steps 500 \
   --evaluation_strategy "no" \
   --save_total_limit 3 \
-  --learning_rate 2e-5 \
+  --learning_rate 3e-3 \
   --weight_decay 0. \
   --warmup_ratio 0.03 \
   --lr_scheduler_type "cosine" \
@@ -26,4 +26,4 @@ accelerate launch --config_file ./peft/accelerate_config.yaml ./peft/train.py \
   --lora True \
   --lora_r 8 \
   --lora_alpha 32 \
-  --lora_dropout 0.05
+  --lora_dropout 0.1
