@@ -1,5 +1,5 @@
 compute_environment: LOCAL_MACHINE
-#deepspeed_config:
+deepspeed_config: {}
 #  gradient_accumulation_steps: 2
 #  gradient_clipping: 1.0
 #  offload_optimizer_device: cpu
@@ -7,8 +7,8 @@ compute_environment: LOCAL_MACHINE
 #  "bf16": {
 #    "enabled": true
 #  }
-#
-distributed_type: NO
+
+distributed_type: DEEPSPEED
 #fsdp_config:
 #  fsdp: "full_shard auto_wrap"
 #  fsdp_transformer_layer_cls_to_wrap: 'BloomBlock'
