@@ -103,12 +103,10 @@ def main():
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     accelerator = Accelerator()
-    model_name_or_path = model_args.model_name_or_path
     learning_rate = training_args.learning_rate
     num_train_epochs = training_args.num_train_epochs
     batch_size = 4
     seed = 42
-    max_length = 64
     set_seed(seed)
 
     # tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
