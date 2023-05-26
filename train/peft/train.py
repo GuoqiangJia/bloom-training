@@ -17,7 +17,7 @@ from transformers import (
 )
 
 from peft import LoraConfig, TaskType, get_peft_model
-from datasets import make_supervised_data_module
+from datasets_loader import make_supervised_data_module
 from models import build_model
 
 
