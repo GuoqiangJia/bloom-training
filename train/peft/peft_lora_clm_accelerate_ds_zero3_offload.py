@@ -19,6 +19,8 @@ from transformers import (
 )
 
 from peft import LoraConfig, TaskType, get_peft_model
+from transformers.hf_argparser import DataClass
+
 from datasets_loader import make_supervised_data_module
 
 
@@ -171,7 +173,9 @@ def main():
         )
     accelerator.wait_for_everyone()
 
-    data_args = {'data_path': 'data/data.json'}
+    data_args = DataClass()
+    data_args.data_path = "data/data.json"
+
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
 
     train_dataloader = DataLoader(
