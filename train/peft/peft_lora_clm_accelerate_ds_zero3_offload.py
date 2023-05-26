@@ -1,3 +1,4 @@
+import dataclasses
 import gc
 import os
 import sys
@@ -22,6 +23,7 @@ from peft import LoraConfig, TaskType, get_peft_model
 from transformers.hf_argparser import DataClass
 
 from datasets_loader import make_supervised_data_module
+from train.peft.train import DataArguments
 
 
 def levenshtein_distance(str1, str2):
@@ -173,7 +175,7 @@ def main():
         )
     accelerator.wait_for_everyone()
 
-    data_args = DataClass()
+    data_args = DataArguments()
     data_args.data_path = "data/data.json"
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
