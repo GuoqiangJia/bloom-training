@@ -184,7 +184,11 @@ def main():
         data_module["train_dataset"], shuffle=True, collate_fn=data_module["data_collator"],
         batch_size=batch_size, pin_memory=True
     )
-    print(next(iter(train_dataloader)))
+
+    for batch_idx, batch in enumerate(train_dataloader):
+        if batch_idx == 5:
+            break
+        print(batch)
 
     # creating model
     model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
