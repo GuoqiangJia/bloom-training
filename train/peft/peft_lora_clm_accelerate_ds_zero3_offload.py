@@ -23,7 +23,7 @@ from peft import LoraConfig, TaskType, get_peft_model
 from transformers.hf_argparser import DataClass
 
 from datasets_loader import make_supervised_data_module
-from train.peft.train import DataArguments
+from train import DataArguments
 
 
 def levenshtein_distance(str1, str2):
