@@ -19,6 +19,7 @@ from transformers import (
 )
 
 from peft import LoraConfig, TaskType, get_peft_model
+from train.peft.datasets import make_supervised_data_module
 
 
 def levenshtein_distance(str1, str2):
@@ -159,23 +160,6 @@ def main():
         model_inputs["labels"] = labels["input_ids"]
         return model_inputs
 
-    def test_preprocess_function(examples):
-        batch_size = len(examples[text_column])
-        inputs = [f"{text_column} : {x} Label : " for x in examples[text_column]]
-        model_inputs = tokenizer(inputs)
-        # print(model_inputs)
-        for i in range(batch_size):
-            sample_input_ids = model_inputs["input_ids"][i]
-            model_inputs["input_ids"][i] = [tokenizer.pad_token_id] * (
-                max_length - len(sample_input_ids)
-            ) + sample_input_ids
-            model_inputs["attention_mask"][i] = [0] * (max_length - len(sample_input_ids)) + model_inputs[
-                "attention_mask"
-            ][i]
-            model_inputs["input_ids"][i] = torch.tensor(model_inputs["input_ids"][i][:max_length])
-            model_inputs["attention_mask"][i] = torch.tensor(model_inputs["attention_mask"][i][:max_length])
-        return model_inputs
-
     with accelerator.main_process_first():
         processed_datasets = dataset.map(
             preprocess_function,
@@ -187,30 +171,13 @@ def main():
         )
     accelerator.wait_for_everyone()
 
-    train_dataset = processed_datasets["train"]
-
-    with accelerator.main_process_first():
-        processed_datasets = dataset.map(
-            test_preprocess_function,
-            batched=True,
-            num_proc=1,
-            remove_columns=dataset["train"].column_names,
-            load_from_cache_file=False,
-            desc="Running tokenizer on dataset",
-        )
-    eval_dataset = processed_datasets["train"]
-    test_dataset = processed_datasets["test"]
+    data_args = {'data_path': 'data/data.json'}
+    data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
 
     train_dataloader = DataLoader(
-        train_dataset, shuffle=True, collate_fn=default_data_collator, batch_size=batch_size, pin_memory=True
+        data_module["train_dataset"], shuffle=True, collate_fn=data_module["data_collator"],
+        batch_size=batch_size, pin_memory=True
     )
-    eval_dataloader = DataLoader(
-        eval_dataset, collate_fn=default_data_collator, batch_size=batch_size, pin_memory=True
-    )
-    test_dataloader = DataLoader(
-        test_dataset, collate_fn=default_data_collator, batch_size=batch_size, pin_memory=True
-    )
-
     print(next(iter(train_dataloader)))
 
     # creating model
@@ -228,8 +195,8 @@ def main():
         num_training_steps=(len(train_dataloader) * num_epochs),
     )
 
-    model, train_dataloader, eval_dataloader, test_dataloader, optimizer, lr_scheduler = accelerator.prepare(
-        model, train_dataloader, eval_dataloader, test_dataloader, optimizer, lr_scheduler
+    model, train_dataloader, optimizer, lr_scheduler = accelerator.prepare(
+        model, train_dataloader, optimizer, lr_scheduler
     )
     accelerator.print(model)
 
@@ -271,90 +238,90 @@ def main():
         train_ppl = torch.exp(train_epoch_loss)
         accelerator.print(f"{epoch=}: {train_ppl=} {train_epoch_loss=}")
 
-        model.eval()
-        eval_preds = []
-        with TorchTracemalloc() as tracemalloc:
-            for _, batch in enumerate(tqdm(eval_dataloader)):
-                batch = {k: v for k, v in batch.items() if k != "labels"}
-                with torch.no_grad():
-                    outputs = accelerator.unwrap_model(model).generate(
-                        **batch, synced_gpus=is_ds_zero_3, max_new_tokens=10
-                    )  # synced_gpus=True for DS-stage 3
-                outputs = accelerator.pad_across_processes(outputs, dim=1, pad_index=tokenizer.pad_token_id)
-                preds = accelerator.gather_for_metrics(outputs)
-                preds = preds[:, max_length:].detach().cpu().numpy()
-                eval_preds.extend(tokenizer.batch_decode(preds, skip_special_tokens=True))
+        # model.eval()
+        # eval_preds = []
+        # with TorchTracemalloc() as tracemalloc:
+        #     for _, batch in enumerate(tqdm(eval_dataloader)):
+        #         batch = {k: v for k, v in batch.items() if k != "labels"}
+        #         with torch.no_grad():
+        #             outputs = accelerator.unwrap_model(model).generate(
+        #                 **batch, synced_gpus=is_ds_zero_3, max_new_tokens=10
+        #             )  # synced_gpus=True for DS-stage 3
+        #         outputs = accelerator.pad_across_processes(outputs, dim=1, pad_index=tokenizer.pad_token_id)
+        #         preds = accelerator.gather_for_metrics(outputs)
+        #         preds = preds[:, max_length:].detach().cpu().numpy()
+        #         eval_preds.extend(tokenizer.batch_decode(preds, skip_special_tokens=True))
 
         # Printing the GPU memory usage details such as allocated memory, peak memory, and total memory usage
-        accelerator.print("GPU Memory before entering the eval : {}".format(b2mb(tracemalloc.begin)))
-        accelerator.print("GPU Memory consumed at the end of the eval (end-begin): {}".format(tracemalloc.used))
-        accelerator.print("GPU Peak Memory consumed during the eval (max-begin): {}".format(tracemalloc.peaked))
-        accelerator.print(
-            "GPU Total Peak Memory consumed during the eval (max): {}".format(
-                tracemalloc.peaked + b2mb(tracemalloc.begin)
-            )
-        )
+        # accelerator.print("GPU Memory before entering the eval : {}".format(b2mb(tracemalloc.begin)))
+        # accelerator.print("GPU Memory consumed at the end of the eval (end-begin): {}".format(tracemalloc.used))
+        # accelerator.print("GPU Peak Memory consumed during the eval (max-begin): {}".format(tracemalloc.peaked))
+        # accelerator.print(
+        #     "GPU Total Peak Memory consumed during the eval (max): {}".format(
+        #         tracemalloc.peaked + b2mb(tracemalloc.begin)
+        #     )
+        # )
+        #
+        # accelerator.print("CPU Memory before entering the eval : {}".format(b2mb(tracemalloc.cpu_begin)))
+        # accelerator.print("CPU Memory consumed at the end of the eval (end-begin): {}".format(tracemalloc.cpu_used))
+        # accelerator.print("CPU Peak Memory consumed during the eval (max-begin): {}".format(tracemalloc.cpu_peaked))
+        # accelerator.print(
+        #     "CPU Total Peak Memory consumed during the eval (max): {}".format(
+        #         tracemalloc.cpu_peaked + b2mb(tracemalloc.cpu_begin)
+        #     )
+        # )
 
-        accelerator.print("CPU Memory before entering the eval : {}".format(b2mb(tracemalloc.cpu_begin)))
-        accelerator.print("CPU Memory consumed at the end of the eval (end-begin): {}".format(tracemalloc.cpu_used))
-        accelerator.print("CPU Peak Memory consumed during the eval (max-begin): {}".format(tracemalloc.cpu_peaked))
-        accelerator.print(
-            "CPU Total Peak Memory consumed during the eval (max): {}".format(
-                tracemalloc.cpu_peaked + b2mb(tracemalloc.cpu_begin)
-            )
-        )
+        # correct = 0
+        # total = 0
+        # assert len(eval_preds) == len(
+        #     dataset["train"][label_column]
+        # ), f"{len(eval_preds)} != {len(dataset['train'][label_column])}"
+        # for pred, true in zip(eval_preds, dataset["train"][label_column]):
+        #     if pred.strip() == true.strip():
+        #         correct += 1
+        #     total += 1
+        # accuracy = correct / total * 100
+        # accelerator.print(f"{accuracy=}")
+        # accelerator.print(f"{eval_preds[:10]=}")
+        # accelerator.print(f"{dataset['train'][label_column][:10]=}")
 
-        correct = 0
-        total = 0
-        assert len(eval_preds) == len(
-            dataset["train"][label_column]
-        ), f"{len(eval_preds)} != {len(dataset['train'][label_column])}"
-        for pred, true in zip(eval_preds, dataset["train"][label_column]):
-            if pred.strip() == true.strip():
-                correct += 1
-            total += 1
-        accuracy = correct / total * 100
-        accelerator.print(f"{accuracy=}")
-        accelerator.print(f"{eval_preds[:10]=}")
-        accelerator.print(f"{dataset['train'][label_column][:10]=}")
-
-    if do_test:
-        model.eval()
-        test_preds = []
-        for _, batch in enumerate(tqdm(test_dataloader)):
-            batch = {k: v for k, v in batch.items() if k != "labels"}
-            with torch.no_grad():
-                outputs = accelerator.unwrap_model(model).generate(
-                    **batch, synced_gpus=is_ds_zero_3, max_new_tokens=10
-                )  # synced_gpus=True for DS-stage 3
-            outputs = accelerator.pad_across_processes(outputs, dim=1, pad_index=tokenizer.pad_token_id)
-            preds = accelerator.gather(outputs)
-            preds = preds[:, max_length:].detach().cpu().numpy()
-            test_preds.extend(tokenizer.batch_decode(preds, skip_special_tokens=True))
-
-        test_preds_cleaned = []
-        for _, pred in enumerate(test_preds):
-            test_preds_cleaned.append(get_closest_label(pred, classes))
-
-        test_df = dataset["test"].to_pandas()
-        assert len(test_preds_cleaned) == len(test_df), f"{len(test_preds_cleaned)} != {len(test_df)}"
-        test_df[label_column] = test_preds_cleaned
-        test_df["text_labels_orig"] = test_preds
-        accelerator.print(test_df[[text_column, label_column]].sample(20))
-
-        pred_df = test_df[["ID", label_column]]
-        pred_df.columns = ["ID", "Label"]
-
-        os.makedirs(f"data/{dataset_name}", exist_ok=True)
-        pred_df.to_csv(f"data/{dataset_name}/predictions.csv", index=False)
-
-    accelerator.wait_for_everyone()
-    model.push_to_hub(
-        "smangrul/"
-        + f"{dataset_name}_{model_name_or_path}_{peft_config.peft_type}_{peft_config.task_type}".replace("/", "_"),
-        state_dict=accelerator.get_state_dict(model),
-        use_auth_token=True,
-    )
+    # if do_test:
+    #     model.eval()
+    #     test_preds = []
+    #     for _, batch in enumerate(tqdm(test_dataloader)):
+    #         batch = {k: v for k, v in batch.items() if k != "labels"}
+    #         with torch.no_grad():
+    #             outputs = accelerator.unwrap_model(model).generate(
+    #                 **batch, synced_gpus=is_ds_zero_3, max_new_tokens=10
+    #             )  # synced_gpus=True for DS-stage 3
+    #         outputs = accelerator.pad_across_processes(outputs, dim=1, pad_index=tokenizer.pad_token_id)
+    #         preds = accelerator.gather(outputs)
+    #         preds = preds[:, max_length:].detach().cpu().numpy()
+    #         test_preds.extend(tokenizer.batch_decode(preds, skip_special_tokens=True))
+    #
+    #     test_preds_cleaned = []
+    #     for _, pred in enumerate(test_preds):
+    #         test_preds_cleaned.append(get_closest_label(pred, classes))
+    #
+    #     test_df = dataset["test"].to_pandas()
+    #     assert len(test_preds_cleaned) == len(test_df), f"{len(test_preds_cleaned)} != {len(test_df)}"
+    #     test_df[label_column] = test_preds_cleaned
+    #     test_df["text_labels_orig"] = test_preds
+    #     accelerator.print(test_df[[text_column, label_column]].sample(20))
+    #
+    #     pred_df = test_df[["ID", label_column]]
+    #     pred_df.columns = ["ID", "Label"]
+    #
+    #     os.makedirs(f"data/{dataset_name}", exist_ok=True)
+    #     pred_df.to_csv(f"data/{dataset_name}/predictions.csv", index=False)
+    #
+    # accelerator.wait_for_everyone()
+    # model.push_to_hub(
+    #     "smangrul/"
+    #     + f"{dataset_name}_{model_name_or_path}_{peft_config.peft_type}_{peft_config.task_type}".replace("/", "_"),
+    #     state_dict=accelerator.get_state_dict(model),
+    #     use_auth_token=True,
+    # )
     accelerator.wait_for_everyone()
 
 
